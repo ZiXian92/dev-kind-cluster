@@ -86,12 +86,9 @@ This project uses Terraform to provision systems and resources in an already-pro
 ├── INSTRUCTIONS.md          # This file
 ├── kind.yaml                # KinD cluster configuration
 ├── main.tf                  # Primary Terraform configuration
-├── variables.tf             # Variable definitions
-├── outputs.tf               # Output definitions
 ├── terraform.tfvars         # Variable values (keep secure, consider using environment variables)
 ├── modules/                 # Reusable Terraform modules
 │   ├── namespace/           # Namespace with ResourceQuota
-│   ├── deployment/          # Deployment with resource specs
 │   └── ...
 └── .gitignore               # Exclude sensitive files
 ```
