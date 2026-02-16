@@ -1,0 +1,11 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1	
+kind: HTTPRouteFilter
+metadata:
+  name: healthcheck-route-filter
+  namespace: envoy
+spec:
+  directResponse:
+    contentType: "text/plain"
+    statusCode: 200
+    body:
+      inline: "OK"

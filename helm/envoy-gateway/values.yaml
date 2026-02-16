@@ -1,0 +1,18 @@
+# Full reference at https://github.com/envoyproxy/gateway/blob/main/charts/gateway-helm/values.tmpl.yaml
+deployment:
+  envoyGateway:
+    resources:
+      limits:
+        cpu: 200m
+        memory: 1024Mi
+service:
+  type: ClusterIP
+certgen:
+  job:
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 30m
+        memory: 64Mi

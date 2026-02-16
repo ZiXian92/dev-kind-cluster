@@ -1,0 +1,70 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  namespace: envoy
+  name: envoy-proxy
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      useListenerPortAsContainerPort: true # Needed to fix down Pod's ports for NodePort settings below
+      envoyDeployment:
+        # Modified from https://github.com/envoyproxy/gateway/blob/a2702cc5a92c436d218aeb5a8a2ef113b8ffd4da/site/content/en/v1.1/tasks/operations/customize-envoyproxy.md?plain=1#L801
+        # to resolve errors about resource limits not set for common gateway pod shutdown-manager container
+        # This error comes about due to our common standards of imposing resource quota on namespaces
+        patch:
+          type: StrategicMerge
+          value:
+            spec:
+              template:
+                spec:
+                  containers:
+                    - name: shutdown-manager
+                      resources:
+                        limits:
+                          cpu: 500m
+                          memory: 64Mi
+        pod:
+          nodeSelector: # Bind the Gateway Pod to the node designated for application ingress
+            "ingress-ready": "true"
+          securityContext: # Explicitly make compliant to Pod Security Admission
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+        # Sets resource requests and limits for envoy container
+        # No need to patch this one in patch section above
+        container:
+          resources:
+            limits:
+              cpu: 200m
+              memory: 768Mi
+            requests:
+              cpu: 100m
+              memory: 512Mi
+          securityContext: # Explicitly make compliant to Pod Security Admission
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["NET_BIND_SERVICE"] # Needed to allow Envoy to bind to privileged ports 80 and 443
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+      envoyService:
+        # Make sure it uses the assigned node's port 9090 and 9443, configured in KinD config for this purpose
+        # Configuration is Podman Machine host's port 9090 and 9443 are mapped to KinD node's port 80 and 443 respectively, which the envoy proxy service will be using
+        type: NodePort
+        patch: # Needed as Proxy's Service spec does not have fields for NodePort
+          type: StrategicMerge
+          value:
+            spec:
+              ports:
+                - name: http
+                  port: 80
+                  targetPort: 80
+                  nodePort: 30080 # Make sure to match ingress node's port mapping for HTTP
+                - name: https
+                  port: 443
+                  targetPort: 443
+                  nodePort: 30443 # Make sure to match ingress node's port mapping for HTTPS
