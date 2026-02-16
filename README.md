@@ -10,8 +10,6 @@ This project uses Terraform to provision and manage resources in a Kubernetes (K
 ├── kind.yaml                    # KinD cluster configuration
 ├── versions.tf                  # Terraform and provider versions
 ├── main.tf                      # Main Terraform configuration
-├── variables.tf                 # Variable definitions
-├── outputs.tf                   # Output definitions
 ├── terraform.tfvars             # Variable values (example)
 ├── .gitignore                   # Git ignore rules
 ├── README.md                    # This file
@@ -26,7 +24,18 @@ This project uses Terraform to provision and manage resources in a Kubernetes (K
     └── crd-example.yaml         # Example Custom Resource Definition
 ```
 
+## Included components
+
+* Envoy Gateway as Gateway API implementation to serve application ingress traffic
+
 ## Quick Start
+
+### 0. Set up KinD cluster with Kubeconfig installed in default location
+
+This setup was tested working on a Windows 11 machine running Podman Desktop.  
+Podman machine is using WSL backing.
+
+For MacOS, Podman machine may need a gvproxy component to expose the VM's ports to MacOS host.
 
 ### 1. Initialize Terraform
 
@@ -34,14 +43,7 @@ This project uses Terraform to provision and manage resources in a Kubernetes (K
 terraform init
 ```
 
-### 2. Review Configuration
-
-Examine the following files:
-- `variables.tf` - Define your variables with sensible defaults
-- `terraform.tfvars` - Set variable values for your environment
-- `main.tf` - Configure which modules to deploy
-
-### 3. Plan Changes
+### 2. Plan Changes
 
 ```bash
 terraform plan
@@ -49,18 +51,16 @@ terraform plan
 
 Review the output carefully before applying.
 
-### 4. Apply Configuration
+### 3. Apply Configuration
 
 ```bash
 terraform apply
 ```
 
-### 5. Validate and Format
+### 4. Check that the cluster can serve application traffic
 
-```bash
-terraform validate
-terraform fmt -recursive
-```
+Open browser and access http://healthcheck.localtest.me:9090/healthz  
+This is the healthcheck endpoint configured for the ingress component.
 
 ## Working with Modules
 
@@ -72,7 +72,7 @@ Creates a Kubernetes namespace with resource quotas.
 module "my_namespace" {
   source = "./modules/namespace"
 
-  namespace_name = "my-app"
+  name = "my-app"
   
   resource_quota = {
     requests_cpu    = "10"
