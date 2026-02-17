@@ -8,7 +8,9 @@ data "kubernetes_config_map_v1" "coredns" {
 locals {
   coredns_hosts_block = <<EOT
     hosts {
-%{for line in []~}
+%{for line in [
+  "10.96.253.184 coder.localtest.me",
+]~}
       ${line}
 %{endfor~}
       fallthrough
