@@ -19,17 +19,17 @@ terraform {
 
 provider "kubernetes" {
   config_path    = "~/.kube/config"
-  config_context = "kind-kind"
+  config_context = "kind-localk8s"
 }
 
 provider "helm" {
   kubernetes = {
     config_path    = "~/.kube/config"
-    config_context = "kind-kind"
+    config_context = "kind-localk8s"
   }
 }
 
 provider "kubectl" {
   config_path    = "~/.kube/config"
-  config_context = "kind-kind"
+  config_context = "kind-localk8s"
 }
