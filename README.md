@@ -59,7 +59,7 @@ terraform apply
 
 ### 4. Check that the cluster can serve application traffic
 
-Open browser and access http://healthcheck.localtest.me:9090/healthz  
+Open browser and access http://healthcheck.localtest.me:30080/healthz  
 This is the healthcheck endpoint configured for the ingress component.
 
 ## Working with Modules

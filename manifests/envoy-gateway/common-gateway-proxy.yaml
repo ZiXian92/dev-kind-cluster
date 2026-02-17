@@ -61,10 +61,10 @@ spec:
             spec:
               ports:
                 - name: http
-                  port: 80
+                  port: 30080
                   targetPort: 80
                   nodePort: 30080 # Make sure to match ingress node's port mapping for HTTP
                 - name: https
-                  port: 443
+                  port: 30443
                   targetPort: 443
                   nodePort: 30443 # Make sure to match ingress node's port mapping for HTTPS
