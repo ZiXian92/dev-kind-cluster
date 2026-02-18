@@ -11,8 +11,9 @@ module "coder_namespace" {
 }
 
 module "coder_workspace_namespace" {
-  source = "./modules/namespace"
-  name   = "dev-ws"
+  source       = "./modules/namespace"
+  name         = "dev-ws"
+  unprivileged = false
 
   # This namespace is for Coder workspaces, so we set a resource quota to avoid users creating too many or too heavy workspaces
   resource_quota = {
