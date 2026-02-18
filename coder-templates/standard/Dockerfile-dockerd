@@ -1,0 +1,18 @@
+FROM alpine:3.23
+
+RUN set -e; \
+  apk update; \
+  apk add --no-cache \
+    ca-certificates \
+    docker \
+    fuse-overlayfs \
+    tini \
+    tzdata \
+  ; \
+  update-ca-certificates; \
+  cp /usr/share/zoneinfo/Asia/Singapore /etc/localtime; \
+  echo "Asia/Singapore" > /etc/timezone; \
+  apk del tzdata; \
+  rm -rf /var/cache/apk/* /tmp/*;
+
+ENTRYPOINT ["tini", "--", "/usr/bin/dockerd", "--storage-driver=vfs"]
