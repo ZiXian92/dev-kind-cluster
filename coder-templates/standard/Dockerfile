@@ -10,6 +10,7 @@ RUN set -e; \
     ca-certificates \
     curl \
     docker \
+    gcompat \
     git \
     nodejs \
     tar \
