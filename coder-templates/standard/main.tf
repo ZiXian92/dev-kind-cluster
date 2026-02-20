@@ -26,76 +26,84 @@ data "coder_workspace" "me" {}
 data "coder_workspace_owner" "me" {}
 
 # Variables
-variable "workspace_namespace" {
-  description = "Kubernetes namespace for the workspace"
-  type        = string
-  default     = "dev-ws"
+data "coder_parameter" "cpu_request" {
+  name         = "cpu_request"
+  display_name = "CPU Request"
+  description  = "CPU request for code-server container (in millicores)"
+  type         = "string"
+  default      = "1000m"
 }
 
-variable "coder_agent_image" {
-  description = "Docker image for code-server with Coder agent"
-  type        = string
-  default     = "localhost/coder-ws:latest"
+data "coder_parameter" "cpu_limit" {
+  name         = "cpu_limit"
+  display_name = "CPU Limit"
+  description  = "CPU limit for code-server container (in millicores)"
+  type         = "string"
+  default      = "2000m"
 }
 
-variable "dockerd_image" {
-  description = "Docker image for the privileged Docker daemon"
-  type        = string
-  default     = "localhost/dockerd:latest"
+data "coder_parameter" "memory_request" {
+  name         = "memory_request"
+  display_name = "Memory Request"
+  description  = "Memory request for code-server container"
+  type         = "string"
+  default      = "512Mi"
 }
 
-variable "cpu_request" {
-  description = "CPU request for code-server container (in millicores)"
-  type        = string
-  default     = "1000m"
+data "coder_parameter" "memory_limit" {
+  name         = "memory_limit"
+  display_name = "Memory Limit"
+  description  = "Memory limit for code-server container"
+  type         = "string"
+  default      = "1Gi"
 }
 
-variable "cpu_limit" {
-  description = "CPU limit for code-server container (in millicores)"
-  type        = string
-  default     = "2000m"
+data "coder_parameter" "vscode_extensions" {
+  name         = "vscode_extensions"
+  display_name = "VSCode Extensions"
+  description  = "List of extensions to install in code-server (comma-separated)."
+  type         = "string"
+  default      = "mhutchie.git-graph"
 }
 
-variable "memory_request" {
-  description = "Memory request for code-server container"
-  type        = string
-  default     = "512Mi"
+data "coder_parameter" "vscode_settings" {
+  name         = "vscode_settings"
+  display_name = "VSCode Settings"
+  description  = "VSCode settings to be applied in code-server."
+  type         = "string"
+  form_type    = "textarea"
+  default      = <<-EOT
+  {
+    // Use 2 spaces for indentation
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    
+    // Format files automatically on save
+    "editor.formatOnSave": true,
+    
+    // Ensure a final newline at the end of files
+    "files.insertFinalNewline": true
+  }
+  EOT
 }
 
-variable "memory_limit" {
-  description = "Memory limit for code-server container"
-  type        = string
-  default     = "1Gi"
-}
+locals {
+  workspace_namepace = "dev-ws"
+  coder_ws_port      = 8080
+  preagent_script    = <<-EOT
+    #!/bin/bash
+    set -e
+    %{for extension in split(",", data.coder_parameter.vscode_extensions.value)}
+    /usr/local/bin/code-server --install-extension ${trimspace(extension)}
+    %{endfor}
 
-variable "dockerd_cpu_request" {
-  description = "CPU request for dockerd container (in millicores)"
-  type        = string
-  default     = "200m"
-}
+    cat <<'EOF' > /home/coder/.local/share/code-server/User/settings.json
+${data.coder_parameter.vscode_settings.value}
+EOF
 
-variable "dockerd_memory_request" {
-  description = "Memory request for dockerd container"
-  type        = string
-  default     = "500Mi"
-}
-
-variable "dockerd_cpu_limits" {
-  description = "CPU limits for Docker daemon"
-  type        = string
-  default     = "500m"
-}
-
-variable "dockerd_memory_limits" {
-  description = "Memory limits for Docker daemon"
-  type        = string
-  default     = "1Gi"
-}
-
-variable "coder_ws_port" {
-  description = "Port for code-server"
-  type        = number
-  default     = 8080
+    # Start code-server in the background
+    /usr/local/bin/code-server --bind-addr 0.0.0.0:${local.coder_ws_port} --auth none &
+  EOT
 }
 
 # Coder Agent
@@ -109,7 +117,7 @@ resource "coder_agent" "main" {
   display_apps {
     port_forwarding_helper = true
     ssh_helper             = false
-    vscode                 = true
+    vscode                 = false
     vscode_insiders        = false
     web_terminal           = true
   }
@@ -154,12 +162,12 @@ resource "coder_app" "code_server" {
   slug         = "code"
   display_name = "code-server"
   icon         = "/icon/code.svg"
-  url          = "http://localhost:${var.coder_ws_port}"
+  url          = "http://localhost:${local.coder_ws_port}?workspace=/home/coder"
   subdomain    = false
   share        = "owner"
 
   healthcheck {
-    url       = "http://localhost:${var.coder_ws_port}/healthz"
+    url       = "http://localhost:${local.coder_ws_port}/healthz"
     interval  = 10
     threshold = 3
   }
@@ -167,10 +175,10 @@ resource "coder_app" "code_server" {
 
 # Kubernetes Deployment with code-server and dockerd containers
 resource "kubernetes_deployment_v1" "coder_workspace" {
-  count = data.coder_workspace.me.start_count
+  count = data.coder_workspace.me.start_count > 0 ? 1 : 0
   metadata {
     name      = lower(data.coder_workspace.me.name)
-    namespace = var.workspace_namespace
+    namespace = local.workspace_namepace
     labels = {
       "app.kubernetes.io/name"      = "coder-workspace"
       "app.kubernetes.io/instance"  = lower(data.coder_workspace.me.name)
@@ -183,6 +191,10 @@ resource "kubernetes_deployment_v1" "coder_workspace" {
 
   spec {
     replicas = 1
+
+    strategy {
+      type = "Recreate"
+    }
 
     selector {
       match_labels = {
@@ -200,14 +212,6 @@ resource "kubernetes_deployment_v1" "coder_workspace" {
       }
 
       spec {
-        # Shared volume for Docker socket
-        volume {
-          name = "docker-run"
-          empty_dir {
-            size_limit = "1Gi"
-          }
-        }
-
         volume {
           name = "home"
           empty_dir {
@@ -218,30 +222,27 @@ resource "kubernetes_deployment_v1" "coder_workspace" {
         # code-server container (runs Coder agent)
         container {
           name              = "code-server"
-          image             = var.coder_agent_image
+          image             = "localhost/coder-ws:latest"
           image_pull_policy = "IfNotPresent"
-          command           = ["/sbin/tini", "--", "/bin/bash", "-c", "(/usr/local/bin/code-server --bind-addr 0.0.0.0:8080 --auth none >/tmp/code-server.log 2>&1 &) && ${coder_agent.main.init_script}"]
+          command           = ["/usr/bin/tini", "--", "/bin/bash", "-c"]
+          args = [
+            "${local.preagent_script}\n${coder_agent.main.init_script}"
+          ]
 
           port {
             name           = "http"
-            container_port = var.coder_ws_port
+            container_port = local.coder_ws_port
           }
 
           resources {
             requests = {
-              cpu    = var.cpu_request
-              memory = var.memory_request
+              cpu    = data.coder_parameter.cpu_request.value
+              memory = data.coder_parameter.memory_request.value
             }
             limits = {
-              cpu    = var.cpu_limit
-              memory = var.memory_limit
+              cpu    = data.coder_parameter.cpu_limit.value
+              memory = data.coder_parameter.memory_limit.value
             }
-          }
-
-          # Mount shared Docker socket volume
-          volume_mount {
-            name       = "docker-run"
-            mount_path = "/var/run"
           }
 
           volume_mount {
@@ -293,35 +294,6 @@ resource "kubernetes_deployment_v1" "coder_workspace" {
               drop = ["ALL"]
               add  = ["NET_BIND_SERVICE"]
             }
-          }
-        }
-
-        # dockerd container (privileged sidecar)
-        container {
-          name  = "dockerd"
-          image = var.dockerd_image
-
-          image_pull_policy = "IfNotPresent"
-
-          resources {
-            requests = {
-              cpu    = var.dockerd_cpu_request
-              memory = var.dockerd_memory_request
-            }
-            limits = {
-              cpu    = var.dockerd_cpu_limits
-              memory = var.dockerd_memory_limits
-            }
-          }
-
-          # Mount shared Docker socket volume
-          volume_mount {
-            name       = "docker-run"
-            mount_path = "/var/run"
-          }
-
-          security_context {
-            privileged = true
           }
         }
       }

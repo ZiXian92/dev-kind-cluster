@@ -14,7 +14,6 @@ RUN set -e; \
     git \
     podman \
     python3-venv \
-    uidmap \
     tini \
     tzdata \
     xz-utils \
@@ -23,12 +22,6 @@ RUN set -e; \
   # Create coder group and user (uid 2001)
   groupadd -g 2001 coder && \
   useradd -m -u 2001 -g coder -s /bin/bash coder; \
-  \
-  # Set up UID and GID giles
-  echo "coder:100000:65536" >> /etc/subuid; \
-  echo "coder:100000:65536" >> /etc/subgid; \
-  chown coder:coder /etc/subuid /etc/subgid; \
-  chmod u+s /usr/bin/newuidmap /usr/bin/newgidmap; \
   \
   # Update CA certificates
   echo "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURERENDQWZTZ0F3SUJBZ0lRWGZPLzl3RThlZ1lLc0pkUWRsY1l5REFOQmdrcWhraUc5dzBCQVFzRkFEQVoKTVJjd0ZRWURWUVFEREE0cUxteHZZMkZzZEdWemRDNXRaVEFlRncweU5qQXlNVFl4TWpBNU1UZGFGdzB5TnpBeQpNVFl4TWpBNU1UZGFNQmt4RnpBVkJnTlZCQU1NRGlvdWJHOWpZV3gwWlhOMExtMWxNSUlCSWpBTkJna3Foa2lHCjl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF4Vk1nNnM5dlNySjlld0o4V3o0ZnVyaXJYVWYzandSUStpZ3UKazA0MjZRSDV0RVZnOXZpKzJVWEJwZTdRSDlKMitoT0VLVytaeUdJWnFiVDZaNHdaWkY1ZXlYRXpzd1pha0lWKwp6RkRCdFJjL1l2TWgvVmFXWmRib1RPSHVmTmtuem5OeWVVWWpFMFFMbDgvcWluUmRYOUV2UVRBb3JENENPWGo5CjJNZ3dzbDR6Q2c5bHdtaGNWaDluMFB6RG5UK1ZKajF1UnRKYmppeURiRGwyOHBCWTFnSkVCZ2NWY25HWXBtRHMKR0xLMG1QSXQrblFuS3ZjRnloQ2FDQTJDL0xRS2szMlJVa1NNdjdqalNFSVZPa0gzdUVEdkZ1WFdoRm9yelNpZwpBamliamYzRHV1dDd1ZWw3VWxBcTJncEZONmlsZ2F0ZlNFd2xmUWVvYzBRZ1FmTkhLd0lEQVFBQm8xQXdUakFPCkJnTlZIUThCQWY4RUJBTUNCYUF3RXdZRFZSMGxCQXd3Q2dZSUt3WUJCUVVIQXdFd0RBWURWUjBUQVFIL0JBSXcKQURBWkJnTlZIUkVFRWpBUWdnNHFMbXh2WTJGc2RHVnpkQzV0WlRBTkJna3Foa2lHOXcwQkFRc0ZBQU9DQVFFQQpoc0lxZ3YyUllDWW5POHJzbGUza3EzNTZDY2djeXVucjZPc1FEUzBjRzIxRUx1TTdtSFNsaSt4TzBLSVZmTnJSCkJmNHVYb1Q4dGRId05tSHpJNHppbFRmMnoxMUFtUkcrVk9wdlU0bEEwYlgxZ0tDSTR3dm83VHM4V0wzUFpUeXEKc2hodFEwZUpWZy9Jc0R0cmVQVEhCZWp5YnZ6d24wc3YyYkRiL2pHU2lNYXBwdHJMYzlRTEZ5d2pLK3hPRUM0SApqc1gxZ201alA1TDAwQjZFMXpNV1BRVVFtbGlZQmp3UXVpN2FuamdkTzhqNnI4OE9mNllVWDFLZzlDNnAvKzdCCjg1UTNoZk9RVDltTDBSUEMzdHpoaWs5aldlTlhkWnBSVW5hL2xrcDNOY1JVQjJYZTlEaEV1RUVmeTNFRVhpencKNmVWdkwxNytIb1JQNUFraVd0ZHVaZz09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K" | base64 -d > /usr/local/share/ca-certificates/localtest-me.crt; \
@@ -60,3 +53,5 @@ RUN set -e; \
 
 USER coder
 WORKDIR /home/coder
+
+ENTRYPOINT ["tini", "--", "code-server", "--bind-addr", "0.0.0.0:8080", "--auth", "none"]
