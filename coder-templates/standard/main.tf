@@ -232,6 +232,7 @@ resource "kubernetes_persistent_volume_claim_v1" "workspace_docker_data" {
 
 # Kubernetes Deployment with code-server and dockerd containers
 resource "kubernetes_deployment_v1" "coder_workspace" {
+  count = data.coder_workspace.me.start_count > 0 ? 1 : 0
   metadata {
     name      = lower(data.coder_workspace.me.name)
     namespace = local.workspace_namepace
@@ -246,7 +247,7 @@ resource "kubernetes_deployment_v1" "coder_workspace" {
   }
 
   spec {
-    replicas = data.coder_workspace.me.start_count > 0 ? 1 : 0
+    replicas = 1
 
     strategy {
       type = "Recreate"
