@@ -26,14 +26,6 @@ data "coder_workspace" "me" {}
 data "coder_workspace_owner" "me" {}
 
 # Variables
-data "coder_parameter" "cpu_request" {
-  name         = "cpu_request"
-  display_name = "CPU Request"
-  description  = "CPU request for code-server container (in millicores)"
-  type         = "string"
-  default      = "1000m"
-}
-
 data "coder_parameter" "cpu_limit" {
   name         = "cpu_limit"
   display_name = "CPU Limit"
@@ -41,14 +33,6 @@ data "coder_parameter" "cpu_limit" {
   mutable      = true
   type         = "string"
   default      = "2000m"
-}
-
-data "coder_parameter" "memory_request" {
-  name         = "memory_request"
-  display_name = "Memory Request"
-  description  = "Memory request for code-server container"
-  type         = "string"
-  default      = "512Mi"
 }
 
 data "coder_parameter" "memory_limit" {
@@ -310,8 +294,8 @@ resource "kubernetes_deployment_v1" "coder_workspace" {
 
           resources {
             requests = {
-              cpu    = data.coder_parameter.cpu_request.value
-              memory = data.coder_parameter.memory_request.value
+              cpu    = "100m"
+              memory = "128Mi"
             }
             limits = {
               cpu    = data.coder_parameter.cpu_limit.value
