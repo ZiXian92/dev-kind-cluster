@@ -165,7 +165,7 @@ locals {
         if ! command -v terraform &> /dev/null || [ "$(terraform version | head -n1 | awk '{print $2}' | sed 's/v//')" != "<VERSION>" ]; then
           echo Installing Terraform <VERSION>... && \
         curl -L -o /tmp/terraform.zip "https://releases.hashicorp.com/terraform/<VERSION>/terraform_<VERSION>_linux_amd64.zip" && \
-        unzip /tmp/terraform.zip -d $HOME/.local/bin && \
+          unzip -o /tmp/terraform.zip -d $HOME/.local/bin && \
         chmod +x $HOME/.local/bin/terraform && \
         rm -rf /tmp/terraform.zip
         else
