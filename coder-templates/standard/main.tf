@@ -126,11 +126,16 @@ locals {
       install        = true
       version        = "4.1.1"
       install_script = <<-EOT
+        if ! command -v helm &> /dev/null || [ "$(helm version --short | sed 's/v//')" != "<VERSION>" ]; then
+          echo Installing Helm <VERSION>... && \
         curl -L -o /tmp/helm.tar.gz "https://get.helm.sh/helm-v<VERSION>-linux-amd64.tar.gz" && \
         tar -xzvf /tmp/helm.tar.gz -C /tmp && \
         mv /tmp/linux-amd64/helm $HOME/.local/bin/helm && \
         chmod +x $HOME/.local/bin/helm && \
         rm -rf /tmp/helm.tar.gz /tmp/linux-amd64
+        else
+          echo "Helm <VERSION> is already installed."
+        fi
       EOT
     }
     golang = {
