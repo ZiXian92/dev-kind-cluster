@@ -38,6 +38,7 @@ data "coder_parameter" "cpu_limit" {
   name         = "cpu_limit"
   display_name = "CPU Limit"
   description  = "CPU limit for code-server container (in millicores)"
+  mutable      = true
   type         = "string"
   default      = "2000m"
 }
@@ -54,6 +55,7 @@ data "coder_parameter" "memory_limit" {
   name         = "memory_limit"
   display_name = "Memory Limit"
   description  = "Memory limit for code-server container"
+  mutable      = true
   type         = "string"
   default      = "1Gi"
 }
@@ -62,6 +64,7 @@ data "coder_parameter" "vscode_extensions" {
   name         = "vscode_extensions"
   display_name = "VSCode Extensions"
   description  = "List of extensions to install in code-server (comma-separated)."
+  mutable      = true
   type         = "string"
   default      = "mhutchie.git-graph"
 }
@@ -70,6 +73,7 @@ data "coder_parameter" "vscode_settings" {
   name         = "vscode_settings"
   display_name = "VSCode Settings"
   description  = "VSCode settings to be applied in code-server."
+  mutable      = true
   type         = "string"
   form_type    = "textarea"
   default      = <<-EOT
