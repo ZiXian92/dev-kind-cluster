@@ -188,8 +188,6 @@ locals {
     # Start Docker daemon in the background
     /usr/bin/dockerd &
 
-    # To-Do: Install other configured tools like Golang, kubectl, helm, etc. here
-
     # Set up and run code-server
     gosu coder /bin/bash <<'EOC'
       set -e
@@ -197,9 +195,6 @@ locals {
       mkdir -p $HOME/.local/bin
       grep -qxF 'export PATH=$HOME/.local/bin:$PATH' $HOME/.bash_profile || \
       echo 'export PATH=$HOME/.local/bin:$PATH' >> $HOME/.bash_profile
-      %{for tool_key in jsondecode(data.coder_parameter.install_tools.value)}
-        ${replace(local.tools[tool_key].install_script, "<VERSION>", local.tools[tool_key].version)}
-      %{endfor}
 
       # Install code-server extensions
       %{for extension in split(",", data.coder_parameter.vscode_extensions.value)}
@@ -267,6 +262,20 @@ resource "coder_agent" "main" {
       threshold = 90
     }
   }
+}
+
+resource "coder_script" "install_tools" {
+  agent_id     = coder_agent.main.id
+  display_name = "Install Tools"
+  run_on_start = true
+  run_on_stop  = false
+  script       = <<-EOT
+    set -e
+
+    %{for tool_key in jsondecode(data.coder_parameter.install_tools.value)}
+      ${replace(local.tools[tool_key].install_script, "<VERSION>", local.tools[tool_key].version)}
+    %{endfor}
+  EOT
 }
 
 # Coder App for code-server web access
