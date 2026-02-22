@@ -112,7 +112,7 @@ locals {
       install        = true
       version        = "1.35.1"
       install_script = <<-EOT
-        if ! command -v kubectl &> /dev/null || [ "$(kubectl version --client --short | awk '{print $3}' | sed 's/v//')" != "<VERSION>" ]; then
+        if (! command -v kubectl &> /dev/null) || [ "$(kubectl version --client | grep 'Client Version:' | awk '{print $3}' | sed 's/v//')" != "<VERSION>" ]; then
           echo Installing Kubectl <VERSION>... && \
         curl -L -o $HOME/.local/bin/kubectl "https://dl.k8s.io/release/v<VERSION>/bin/linux/amd64/kubectl" && \
         chmod +x $HOME/.local/bin/kubectl
@@ -126,7 +126,7 @@ locals {
       install        = true
       version        = "4.1.1"
       install_script = <<-EOT
-        if ! command -v helm &> /dev/null || [ "$(helm version --short | sed 's/v//')" != "<VERSION>" ]; then
+        if (! command -v helm &> /dev/null) || [ "$(helm version --short | sed 's/^v//' | cut -d '+' -f1)" != "<VERSION>" ]; then
           echo Installing Helm <VERSION>... && \
         curl -L -o /tmp/helm.tar.gz "https://get.helm.sh/helm-v<VERSION>-linux-amd64.tar.gz" && \
         tar -xzvf /tmp/helm.tar.gz -C /tmp && \
@@ -143,7 +143,7 @@ locals {
       install        = true
       version        = "1.26.0"
       install_script = <<-EOT
-        if ! command -v go &> /dev/null || [ "$(go version | awk '{print $3}' | sed 's/go//')" != "<VERSION>" ]; then
+        if (! command -v go &> /dev/null) || [ "$(go version | awk '{print $3}' | sed 's/go//')" != "<VERSION>" ]; then
           echo Installing Go <VERSION>... && \
           rm -rf $HOME/.local/go && \
         curl -L -o /tmp/go.tar.gz "https://go.dev/dl/go<VERSION>.linux-amd64.tar.gz" && \
@@ -162,7 +162,7 @@ locals {
       install        = true
       version        = "1.14.5"
       install_script = <<-EOT
-        if ! command -v terraform &> /dev/null || [ "$(terraform version | head -n1 | awk '{print $2}' | sed 's/v//')" != "<VERSION>" ]; then
+        if (! command -v terraform &> /dev/null) || [ "$(terraform version | head -n1 | awk '{print $2}' | sed 's/v//')" != "<VERSION>" ]; then
           echo Installing Terraform <VERSION>... && \
         curl -L -o /tmp/terraform.zip "https://releases.hashicorp.com/terraform/<VERSION>/terraform_<VERSION>_linux_amd64.zip" && \
           unzip -o /tmp/terraform.zip -d $HOME/.local/bin && \
