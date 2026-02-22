@@ -133,12 +133,17 @@ locals {
       install        = true
       version        = "1.26.0"
       install_script = <<-EOT
+        if ! command -v go &> /dev/null || [ "$(go version | awk '{print $3}' | sed 's/go//')" = "<VERSION>" ]; then
+          echo Installing Go <VERSION>... && \
         curl -L -o /tmp/go.tar.gz "https://go.dev/dl/go<VERSION>.linux-amd64.tar.gz" && \
         tar -xzvf /tmp/go.tar.gz -C /tmp && \
         mv /tmp/go $HOME/.local/go && \
         rm -rf /tmp/go.tar.gz
         grep -qxF 'export PATH=$HOME/.local/go/bin:$PATH' $HOME/.bash_profile || \
         echo 'export PATH=$HOME/.local/go/bin:$PATH' >> $HOME/.bash_profile
+        else
+          echo "Go <VERSION> is already installed."
+        fi
       EOT
     }
     terraform = {
