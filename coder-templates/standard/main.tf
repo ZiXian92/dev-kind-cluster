@@ -138,7 +138,7 @@ locals {
       set -e
       # Install additional tools
       mkdir -p $HOME/.local/bin
-      echo "export PATH=\$HOME/.local/bin:\$PATH" >> $HOME/.bashrc
+      echo "export PATH=\$HOME/.local/bin:\$PATH" > $HOME/.bash_profile
       %{for tool_key in jsondecode(data.coder_parameter.install_tools.value)}
         ${replace(local.tools[tool_key].install_script, "<VERSION>", local.tools[tool_key].version)}
       %{endfor}
