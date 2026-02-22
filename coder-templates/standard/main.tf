@@ -44,6 +44,16 @@ data "coder_parameter" "memory_limit" {
   default      = "1Gi"
 }
 
+data "coder_parameter" "custom_ca_certificates" {
+  name         = "custom_ca_certificates"
+  display_name = "Custom CA Certificates"
+  description  = "List of Base64-encoded custom CA certificates to trust in the workspace, 1 per line."
+  mutable      = true
+  type         = "string"
+  form_type    = "textarea"
+  default      = ""
+}
+
 data "coder_parameter" "vscode_extensions" {
   name         = "vscode_extensions"
   display_name = "VSCode Extensions"
@@ -78,9 +88,17 @@ data "coder_parameter" "vscode_settings" {
 locals {
   workspace_namepace = "dev-ws"
   coder_ws_port      = 8080
+  compulsory_ca      = "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURERENDQWZTZ0F3SUJBZ0lRWGZPLzl3RThlZ1lLc0pkUWRsY1l5REFOQmdrcWhraUc5dzBCQVFzRkFEQVoKTVJjd0ZRWURWUVFEREE0cUxteHZZMkZzZEdWemRDNXRaVEFlRncweU5qQXlNVFl4TWpBNU1UZGFGdzB5TnpBeQpNVFl4TWpBNU1UZGFNQmt4RnpBVkJnTlZCQU1NRGlvdWJHOWpZV3gwWlhOMExtMWxNSUlCSWpBTkJna3Foa2lHCjl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF4Vk1nNnM5dlNySjlld0o4V3o0ZnVyaXJYVWYzandSUStpZ3UKazA0MjZRSDV0RVZnOXZpKzJVWEJwZTdRSDlKMitoT0VLVytaeUdJWnFiVDZaNHdaWkY1ZXlYRXpzd1pha0lWKwp6RkRCdFJjL1l2TWgvVmFXWmRib1RPSHVmTmtuem5OeWVVWWpFMFFMbDgvcWluUmRYOUV2UVRBb3JENENPWGo5CjJNZ3dzbDR6Q2c5bHdtaGNWaDluMFB6RG5UK1ZKajF1UnRKYmppeURiRGwyOHBCWTFnSkVCZ2NWY25HWXBtRHMKR0xLMG1QSXQrblFuS3ZjRnloQ2FDQTJDL0xRS2szMlJVa1NNdjdqalNFSVZPa0gzdUVEdkZ1WFdoRm9yelNpZwpBamliamYzRHV1dDd1ZWw3VWxBcTJncEZONmlsZ2F0ZlNFd2xmUWVvYzBRZ1FmTkhLd0lEQVFBQm8xQXdUakFPCkJnTlZIUThCQWY4RUJBTUNCYUF3RXdZRFZSMGxCQXd3Q2dZSUt3WUJCUVVIQXdFd0RBWURWUjBUQVFIL0JBSXcKQURBWkJnTlZIUkVFRWpBUWdnNHFMbXh2WTJGc2RHVnpkQzV0WlRBTkJna3Foa2lHOXcwQkFRc0ZBQU9DQVFFQQpoc0lxZ3YyUllDWW5POHJzbGUza3EzNTZDY2djeXVucjZPc1FEUzBjRzIxRUx1TTdtSFNsaSt4TzBLSVZmTnJSCkJmNHVYb1Q4dGRId05tSHpJNHppbFRmMnoxMUFtUkcrVk9wdlU0bEEwYlgxZ0tDSTR3dm83VHM4V0wzUFpUeXEKc2hodFEwZUpWZy9Jc0R0cmVQVEhCZWp5YnZ6d24wc3YyYkRiL2pHU2lNYXBwdHJMYzlRTEZ5d2pLK3hPRUM0SApqc1gxZ201alA1TDAwQjZFMXpNV1BRVVFtbGlZQmp3UXVpN2FuamdkTzhqNnI4OE9mNllVWDFLZzlDNnAvKzdCCjg1UTNoZk9RVDltTDBSUEMzdHpoaWs5aldlTlhkWnBSVW5hL2xrcDNOY1JVQjJYZTlEaEV1RUVmeTNFRVhpencKNmVWdkwxNytIb1JQNUFraVd0ZHVaZz09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
   preagent_script    = <<-EOT
     #!/bin/bash
     set -e
+
+    # Install custom CA certificates if provided
+    echo "${local.compulsory_ca}" | base64 -d > /usr/local/share/ca-certificates/localtest-me.crt
+    %{for i, cert in split("\n", data.coder_parameter.custom_ca_certificates.value)}
+      echo "${cert}" | base64 -d > /usr/local/share/ca-certificates/custom-${i}.crt
+    %{endfor}
+    update-ca-certificates
 
     # Start Docker daemon in the background
     /usr/bin/dockerd &
