@@ -254,6 +254,7 @@ resource "coder_app" "code_server" {
   slug         = "code"
   display_name = "code-server"
   icon         = "/icon/code.svg"
+  open_in      = "tab"
   url          = "http://localhost:${local.coder_ws_port}?workspace=/home/coder"
   subdomain    = false
   share        = "owner"
