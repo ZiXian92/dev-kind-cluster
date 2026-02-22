@@ -128,6 +128,30 @@ locals {
         rm -rf /tmp/helm.tar.gz /tmp/linux-amd64
       EOT
     }
+    golang = {
+      display_name   = "Golang"
+      install        = true
+      version        = "1.26.0"
+      install_script = <<-EOT
+        curl -L -o /tmp/go.tar.gz "https://go.dev/dl/go<VERSION>.linux-amd64.tar.gz" && \
+        tar -xzvf /tmp/go.tar.gz -C /tmp && \
+        mv /tmp/go $HOME/.local/go && \
+        rm -rf /tmp/go.tar.gz
+        grep -qxF 'export PATH=$HOME/.local/go/bin:$PATH' $HOME/.bash_profile || \
+        echo 'export PATH=$HOME/.local/go/bin:$PATH' >> $HOME/.bash_profile
+      EOT
+    }
+    terraform = {
+      display_name   = "Terraform"
+      install        = true
+      version        = "1.14.5"
+      install_script = <<-EOT
+        curl -L -o /tmp/terraform.zip "https://releases.hashicorp.com/terraform/<VERSION>/terraform_<VERSION>_linux_amd64.zip" && \
+        unzip /tmp/terraform.zip -d $HOME/.local/bin && \
+        chmod +x $HOME/.local/bin/terraform && \
+        rm -rf /tmp/terraform.zip
+      EOT
+    }
   }
   preagent_script = <<-EOT
     #!/bin/bash
