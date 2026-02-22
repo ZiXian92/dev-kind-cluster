@@ -116,6 +116,18 @@ locals {
         chmod +x $HOME/.local/bin/kubectl
       EOT
     }
+    helm = {
+      display_name   = "Helm"
+      install        = true
+      version        = "4.1.1"
+      install_script = <<-EOT
+        curl -L -o /tmp/helm.tar.gz "https://get.helm.sh/helm-v<VERSION>-linux-amd64.tar.gz" && \
+        tar -xzvf /tmp/helm.tar.gz -C /tmp && \
+        mv /tmp/linux-amd64/helm $HOME/.local/bin/helm && \
+        chmod +x $HOME/.local/bin/helm && \
+        rm -rf /tmp/helm.tar.gz /tmp/linux-amd64
+      EOT
+    }
   }
   preagent_script = <<-EOT
     #!/bin/bash
