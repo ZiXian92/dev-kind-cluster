@@ -18,6 +18,8 @@ RUN <<EOF
     python3-venv \
     tini \
     tzdata \
+    unzip \
+    vim \
     xz-utils
   
   # Create coder group and user
