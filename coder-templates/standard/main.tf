@@ -112,8 +112,13 @@ locals {
       install        = true
       version        = "1.35.1"
       install_script = <<-EOT
+        if ! command -v kubectl &> /dev/null || [ "$(kubectl version --client --short | awk '{print $3}' | sed 's/v//')" != "<VERSION>" ]; then
+          echo Installing Kubectl <VERSION>... && \
         curl -L -o $HOME/.local/bin/kubectl "https://dl.k8s.io/release/v<VERSION>/bin/linux/amd64/kubectl" && \
         chmod +x $HOME/.local/bin/kubectl
+        else
+          echo "Kubectl <VERSION> is already installed."
+        fi
       EOT
     }
     helm = {
