@@ -1,0 +1,30 @@
+FROM alpine:3.23
+
+RUN <<EOF
+  set -e
+  apk update
+  apk add --no-cache \
+    curl \
+    git \
+    nodejs \
+    npm
+  npm install --global @types/alpinejs
+  # Make sure git, nodejs, and typescript are installed before running code
+  curl -L -o /tmp/code.tar.gz https://vscode.download.prss.microsoft.com/dbazure/download/stable/072586267e68ece9a47aa43f8c108e0dcbf44622/vscode_cli_alpine_x64_cli.tar.gz
+  mkdir /tmp/code
+  tar zxf /tmp/code.tar.gz -C /tmp/code
+  mv /tmp/code/code /usr/local/bin/
+  rm -rf /tmp/code.tar.gz /tmp/code
+
+  # Set up folders for VSCode to store its assets and data respectively
+  mkdir -p /root/vscode-server /root/vscode-data
+
+  # Can get rid of npm after installing typescript globally
+  apk del \
+    npm
+  apk cache clean
+  rm -rf /var/cache/apk/*
+EOF
+
+ENTRYPOINT ["/usr/local/bin/code"]
+CMD ["--host", "0.0.0.0", "--port", "8080", "--without-connection-token", "--accept-server-license-terms", "--server-base-path", "/root/vscode-server", "--server-data-dir", "/root/vscode-data"]
